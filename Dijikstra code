@@ -1,0 +1,114 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+
+typedef struct Edge {
+    int v;              // destination vertex
+    int w;              // weight
+    struct Edge *next;  // next edge in adjacency list
+} Edge;
+
+// Add directed edge u -> v with weight w
+void addEdge(Edge *graph[], int u, int v, int w) {
+    Edge *newEdge = (Edge *)malloc(sizeof(Edge));
+    newEdge->v = v;
+    newEdge->w = w;
+    newEdge->next = graph[u];
+    graph[u] = newEdge;
+}
+
+int minDistance(int dist[], int visited[], int V) {
+    int min = INT_MAX;
+    int min_index = -1;
+
+    for (int v = 0; v < V; v++) {
+        if (!visited[v] && dist[v] <= min) {
+            min = dist[v];
+            min_index = v;
+        }
+    }
+    return min_index;
+}
+
+void dijkstra(int V, Edge *graph[], int src) {
+    int dist[V];
+    int visited[V];
+
+    for (int i = 0; i < V; i++) {
+        dist[i] = INT_MAX;
+        visited[i] = 0;
+    }
+
+    dist[src] = 0;
+
+    // Dijkstra main loop
+    for (int count = 0; count < V - 1; count++) {
+        int u = minDistance(dist, visited, V);
+        if (u == -1) break;         // remaining vertices are unreachable
+        visited[u] = 1;
+
+        // Relax all edges from u
+        Edge *edge = graph[u];
+        while (edge != NULL) {
+            int v = edge->v;
+            int weight = edge->w;
+
+            if (!visited[v] && dist[u] != INT_MAX &&
+                dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+            }
+            edge = edge->next;
+        }
+    }
+
+    // Print result
+    printf("Vertex\tDistance from Source\n");
+    for (int i = 0; i < V; i++) {
+        if (dist[i] == INT_MAX)
+            printf("%d\tINF\n", i);
+        else
+            printf("%d\t%d\n", i, dist[i]);
+    }
+}
+
+int main() {
+    int V, E;
+
+    printf("Enter number of vertices: ");
+    scanf("%d", &V);
+
+    printf("Enter number of edges: ");
+    scanf("%d", &E);
+
+    // Create adjacency list
+    Edge *graph[V];
+    for (int i = 0; i < V; i++)
+        graph[i] = NULL;
+
+    printf("Enter edges in the format: u v w (edge from u to v with weight w)\n");
+    printf("Vertices are numbered from 0 to %d\n", V - 1);
+
+    for (int i = 0; i < E; i++) {
+        int u, v, w;
+        scanf("%d %d %d", &u, &v, &w);
+        addEdge(graph, u, v, w);   // directed edge; add reverse also if graph is undirected
+    }
+
+    int src;
+    printf("Enter source vertex: ");
+    scanf("%d", &src);
+
+    dijkstra(V, graph, src);
+
+    // Free memory
+    for (int i = 0; i < V; i++) {
+        Edge *cur = graph[i];
+        while (cur != NULL) {
+            Edge *tmp = cur;
+            cur = cur->next;
+            free(tmp);
+        }
+    }
+
+    return 0;
+}
